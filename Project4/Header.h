@@ -15,6 +15,8 @@ struct Spadochroniarz
 	int score3;
 
 	ALLEGRO_BITMAP *image;
+	ALLEGRO_BITMAP *image1;
+	ALLEGRO_BITMAP *image2;
 };
 
 struct Przeszkoda

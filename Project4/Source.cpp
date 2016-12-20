@@ -5,39 +5,49 @@
 #include <allegro5\allegro_image.h>
 #include "Header.h"
 
-//GLOBAL=============================
+//GLOBALNE=============================
 const int WIDTH = 500;
 const int HEIGHT = 700;
-const int NUM_PRZESZKODY = 10;							//przeszkody na ekranie
-const int NUM_MONETY = 1;
-const int NUM_ZYCIA = 1;
-enum KEYS { LEFT, RIGHT };
-bool keys[2] = { false, false };
+const int NUM_PRZESZKODY = 10;							//max ilosc przeszkod na ekranie
+const int NUM_MONETY = 1;								//max ilosc monet na ekranie
+const int NUM_ZYCIA = 1;								//max ilosc zyc na ekranie
+enum KEYS { SPACE, ONE, TWO, LEFT, RIGHT };
+bool keys[5] = { false, false, false, false, false };
+enum STATUS { MENU, GRA, KONIEC };
+
+//obiekty
+Spadochroniarz ludek;
+Przeszkoda przeszkody[NUM_PRZESZKODY];
+Monety moneta[NUM_MONETY];
+Zycia zycie[NUM_ZYCIA];
 
 //prototypy
-void InitLudek(Spadochroniarz &ludek, ALLEGRO_BITMAP *image);
-void DrawLudek(Spadochroniarz &ludek);
+void InitLudek(Spadochroniarz &ludek, ALLEGRO_BITMAP *image, ALLEGRO_BITMAP *image1, ALLEGRO_BITMAP *image2);
+void DrawLudekLeft(Spadochroniarz &ludek);
+void DrawLudekRight(Spadochroniarz &ludek);
+void DrawLudekProsto(Spadochroniarz &ludek);
 void MoveLudekLeft(Spadochroniarz &ludek);
 void MoveLudekRight(Spadochroniarz &ludek);
 
 void InitPrzeszkoda(Przeszkoda przeszkody[], int size, ALLEGRO_BITMAP *image);
 void DrawPrzeszkoda(Przeszkoda przeszkody[], int size);
 void StartPrzeszkoda(Przeszkoda przeszkody[], int size);
-void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size);
+void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size, Spadochroniarz &ludek);
 void CollidePrzeszkoda(Przeszkoda przeszkody[], int sizeB, Spadochroniarz &ludek);
 
 void InitMonety(Monety moneta[], int size, ALLEGRO_BITMAP *image);
 void DrawMonety(Monety moneta[], int size);
 void StartMonety(Monety moneta[], int size);
-void UpdateMonety(Monety moneta[], int size);
+void UpdateMonety(Monety moneta[], int size, Spadochroniarz &ludek);
 void CollideMonety(Monety moneta[], int sizeB, Spadochroniarz &ludek);
 
 void InitZycia(Zycia zycie[], int size, ALLEGRO_BITMAP *image);
 void DrawZycia(Zycia zycie[], int size);
 void StartZycia(Zycia zycie[], int size);
-void UpdateZycia(Zycia zycie[], int size);
+void UpdateZycia(Zycia zycie[], int size, Spadochroniarz &ludek);
 void CollideZycia(Zycia zycie[], int sizeB, Spadochroniarz &ludek);
 
+void ChangeStatus(int &status, int nowyStatus);
 
 int main(void)
 {
@@ -45,13 +55,7 @@ int main(void)
 	bool done = false;
 	bool redraw = true;
 	const int FPS = 60;
-	bool GameOver = false;
-
-	//obiekty
-	Spadochroniarz ludek;
-	Przeszkoda przeszkody[NUM_PRZESZKODY];
-	Monety moneta[NUM_MONETY];
-	Zycia zycie[NUM_ZYCIA];
+	int status = -1;
 
 	//zmienne Allegro
 	ALLEGRO_DISPLAY *display = NULL;
@@ -60,8 +64,10 @@ int main(void)
 	ALLEGRO_FONT *font18 = NULL;
 	ALLEGRO_FONT *font32 = NULL;
 	ALLEGRO_FONT *font48 = NULL;
-	ALLEGRO_BITMAP *ludekImage;
-	ALLEGRO_BITMAP *przeszkodyImage;
+	ALLEGRO_BITMAP *ludekImageLeft;			//image
+	ALLEGRO_BITMAP *ludekImageRight;		//image1
+	ALLEGRO_BITMAP *ludekImageProsto;		//image2
+	ALLEGRO_BITMAP *przeszkodyImage;		
 	ALLEGRO_BITMAP *monetaImage;
 	ALLEGRO_BITMAP *zycieImage;
 
@@ -83,8 +89,14 @@ int main(void)
 	event_queue = al_create_event_queue();
 	timer = al_create_timer(1.0 / FPS);
 	
-	ludekImage = al_load_bitmap("spadochroniarz.png");
-	al_convert_mask_to_alpha(ludekImage, al_map_rgb(255, 255, 255));
+	ludekImageLeft = al_load_bitmap("spadochroniarzLEWO.png");
+	al_convert_mask_to_alpha(ludekImageLeft, al_map_rgb(255, 255, 255));
+
+	ludekImageRight = al_load_bitmap("spadochroniarzPRAWO.png");
+	al_convert_mask_to_alpha(ludekImageRight, al_map_rgb(255, 255, 255));
+
+	ludekImageProsto = al_load_bitmap("spadochroniarzPROSTO.png");
+	al_convert_mask_to_alpha(ludekImageProsto, al_map_rgb(255, 255, 255));
 
 	przeszkodyImage = al_load_bitmap("deska.png");
 	al_convert_mask_to_alpha(przeszkodyImage, al_map_rgb(255, 255, 255));
@@ -96,7 +108,10 @@ int main(void)
 	al_convert_mask_to_alpha(zycieImage, al_map_rgb(255, 255, 255));
 
 	srand(time(NULL));
-	InitLudek(ludek, ludekImage);
+
+	ChangeStatus(status, MENU);
+
+	InitLudek(ludek, ludekImageLeft, ludekImageRight, ludekImageProsto);
 	InitPrzeszkoda(przeszkody, NUM_PRZESZKODY, przeszkodyImage);
 	InitMonety(moneta, NUM_MONETY, monetaImage);
 	InitZycia(zycie, NUM_ZYCIA, zycieImage);
@@ -121,27 +136,30 @@ int main(void)
 		{
 			redraw = true;
 
-			if (keys[LEFT])
-				MoveLudekLeft(ludek);
-			if (keys[RIGHT])
-				MoveLudekRight(ludek);
-			
-			if (!GameOver)
+			if (status == MENU)
+			{
+
+			}
+			else if (status == GRA)
 			{
 				StartPrzeszkoda(przeszkody, NUM_PRZESZKODY);			//inicjuje przeszkode
-				UpdatePrzeszkoda(przeszkody, NUM_PRZESZKODY);			//ponowne rysowanie po wyjsciu za ekran
+				UpdatePrzeszkoda(przeszkody, NUM_PRZESZKODY, ludek);	//ponowne rysowanie po wyjsciu za ekran
 				CollidePrzeszkoda(przeszkody, NUM_PRZESZKODY, ludek);
 
-				StartMonety(moneta, NUM_MONETY);
-				UpdateMonety(moneta, NUM_MONETY);
+				StartMonety(moneta, NUM_MONETY);						//inicjuje monete
+				UpdateMonety(moneta, NUM_MONETY, ludek);				//ponowne rysowanie po wyjsciu za ekran
 				CollideMonety(moneta, NUM_MONETY, ludek);
 
-				StartZycia(zycie, NUM_ZYCIA);
-				UpdateZycia(zycie, NUM_ZYCIA);
+				StartZycia(zycie, NUM_ZYCIA);							//inicjuje dodatkowe ¿ycia
+				UpdateZycia(zycie, NUM_ZYCIA, ludek);					//ponowne rysowanie po wyjsciu za ekran
 				CollideZycia(zycie, NUM_ZYCIA, ludek);
 
 				if (ludek.lives <= 0)
-					GameOver = true;
+					ChangeStatus(status, KONIEC);
+			}
+			else if (status == KONIEC)
+			{
+
 			}
 		}
 
@@ -155,13 +173,31 @@ int main(void)
 			switch (ev.keyboard.keycode)
 			{
 			case ALLEGRO_KEY_ESCAPE:
-				done = true;
+				if (status == MENU)
+					done = true;
+				else if (status == KONIEC)
+					done = true;
 				break;
 			case ALLEGRO_KEY_LEFT:
 				keys[LEFT] = true;
 				break;
 			case ALLEGRO_KEY_RIGHT:
 				keys[RIGHT] = true;
+				break;
+			case ALLEGRO_KEY_SPACE:
+				keys[SPACE] = true;		
+				if (status == KONIEC)
+					ChangeStatus(status, GRA);
+				break;
+			case ALLEGRO_KEY_1:
+				keys[1] = true;
+				if (status == MENU)
+					ChangeStatus(status, GRA);
+				break;
+			case ALLEGRO_KEY_2:
+				keys[1] = true;
+				if (status == MENU)
+				done = true;
 				break;
 			}
 		}
@@ -179,16 +215,40 @@ int main(void)
 			case ALLEGRO_KEY_RIGHT:
 				keys[RIGHT] = false;
 				break;
+			case ALLEGRO_KEY_SPACE:
+				keys[SPACE] = false;
+				break;
+			case ALLEGRO_KEY_1:
+				keys[1] = false;
+				break;
+			case ALLEGRO_KEY_2:
+				keys[2] = false;
+				break;
 			}
 		}
 		
 		if (redraw && al_is_event_queue_empty(event_queue))
 		{
 			redraw = false;
-
-			if (!GameOver)
+			
+			if (status == MENU)
 			{
-				DrawLudek(ludek);
+				al_draw_textf(font48, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 300, ALLEGRO_ALIGN_CENTRE, "SPADOCHRONIARZ");
+				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 200, ALLEGRO_ALIGN_CENTRE, "Nacisnij 1 lub 2");
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "1. Nowa gra");
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 100, ALLEGRO_ALIGN_CENTRE, "2. Wyjscie z gry");
+			}
+			else if (status == GRA)
+			{
+				if (keys[LEFT])
+					MoveLudekLeft(ludek);
+
+				if (keys[RIGHT])
+					MoveLudekRight(ludek);
+
+				if (!keys[LEFT] && !keys[RIGHT])
+					DrawLudekProsto(ludek);
+
 				DrawPrzeszkoda(przeszkody, NUM_PRZESZKODY);
 				DrawMonety(moneta, NUM_MONETY);
 				DrawZycia(zycie, NUM_ZYCIA);
@@ -196,17 +256,16 @@ int main(void)
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 - 245, 5, 0, "Punkty: %i", ludek.score);
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 + 190, 5, 0, "Zycia: %i", ludek.lives);
 			}
-
-			else
+			else if (status == KONIEC)
 			{
-				al_draw_textf(font48, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 200, ALLEGRO_ALIGN_CENTRE, "KONIEC GRY");
-				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 100, ALLEGRO_ALIGN_CENTRE, "WYNIK: %i", ludek.score);
-				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "UDERZONE PRZESZKODY: %i", ludek.score1);
-				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 100, ALLEGRO_ALIGN_CENTRE, "OMINIETE PRZESZKODY: %i", ludek.score2);
-				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 200, ALLEGRO_ALIGN_CENTRE, "ZEBRANE MONETY: %i", ludek.score3);
+				al_draw_textf(font48, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 300, ALLEGRO_ALIGN_CENTRE, "KONIEC GRY");
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 200, ALLEGRO_ALIGN_CENTRE, "WYNIK: %i", ludek.score);
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 100, ALLEGRO_ALIGN_CENTRE, "UDERZONE PRZESZKODY: %i", ludek.score1);
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "OMINIETE PRZESZKODY: %i", ludek.score2);
+				al_draw_textf(font32, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 100, ALLEGRO_ALIGN_CENTRE, "ZEBRANE MONETY: %i", ludek.score3);
+				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 200, ALLEGRO_ALIGN_CENTRE, "Nacisnij spacje aby zagrac ponownie");
+				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 + 300, ALLEGRO_ALIGN_CENTRE, "Nacisnij esc aby wyjsc z gry");
 			}
-			
-		
 			al_flip_display();
 			al_clear_to_color(al_map_rgb(50, 200, 255));
 		}
@@ -215,7 +274,9 @@ int main(void)
 	al_destroy_bitmap(zycieImage);
 	al_destroy_bitmap(monetaImage);
 	al_destroy_bitmap(przeszkodyImage);
-	al_destroy_bitmap(ludekImage);
+	al_destroy_bitmap(ludekImageLeft);
+	al_destroy_bitmap(ludekImageRight);
+	al_destroy_bitmap(ludekImageProsto);
 	al_destroy_event_queue(event_queue);
 	al_destroy_timer(timer);
 	al_destroy_font(font18);
@@ -226,43 +287,58 @@ int main(void)
 	return 0;
 }
 
-void InitLudek(Spadochroniarz &ludek, ALLEGRO_BITMAP *image)
+void InitLudek(Spadochroniarz &ludek, ALLEGRO_BITMAP *image = NULL, ALLEGRO_BITMAP *image1 = NULL, ALLEGRO_BITMAP *image2 = NULL)
 {
-	ludek.x = WIDTH / 2;
-	ludek.y = HEIGHT / 2 - 175;
+	ludek.x = WIDTH / 2;			//polozenie poczatkowe - szerokosc
+	ludek.y = HEIGHT / 2 - 175;		//polozenie poczatkowe - wysokosc
 	ludek.ID = GRACZ;
-	ludek.lives = 5;
-	ludek.speed = 8;
-	ludek.boundx = 28;				//toletancja kolizji
-	ludek.boundy = 50;
+	ludek.lives = 5;				//zycia postaci
+	ludek.speed = 8;				//predkosc postaci
+	ludek.boundx = 28;				//toletancja kolizji - szerokosc
+	ludek.boundy = 50;				//toletancja kolizji - wysokosc
 	ludek.score = 0;				//punkty
 	ludek.score1 = 0;				//uderzone przeszkody
 	ludek.score2 = 0;				//ominiete przeszkody
 	ludek.score3 = 0;				//zebrane monety
 
-	ludek.image = image;
+	if (image != NULL)
+		ludek.image = image;		//ludek w lewo
+	if (image1 != NULL)
+		ludek.image1 = image1;		//ludek w prawo
+	if (image2 != NULL)
+		ludek.image2 = image2;		//ludek prosto
 }
 
-void DrawLudek(Spadochroniarz &ludek)
+void DrawLudekLeft(Spadochroniarz &ludek)
 {
 	//al_draw_filled_rectangle(ludek.x, ludek.y, ludek.x + 30, ludek.y + 30, al_map_rgb(255, 0, 255));
 	al_draw_bitmap(ludek.image, ludek.x, ludek.y, 0);
+}
+void DrawLudekRight(Spadochroniarz &ludek)
+{
+	al_draw_bitmap(ludek.image1, ludek.x, ludek.y, 0);
+}
+void DrawLudekProsto(Spadochroniarz &ludek)
+{
+	al_draw_bitmap(ludek.image2, ludek.x, ludek.y, 0);
 }
 
 void MoveLudekLeft(Spadochroniarz &ludek)
 {
 	ludek.x -= ludek.speed;
+	DrawLudekLeft(ludek);
 	if (ludek.x < 0)
 		ludek.x = 0;
 }
 void MoveLudekRight(Spadochroniarz &ludek)
 {
 	ludek.x += ludek.speed;
+	DrawLudekRight(ludek);
 	if (ludek.x > 469)
 		ludek.x = 468;
 }
 
-void InitPrzeszkoda(Przeszkoda przeszkody[], int size, ALLEGRO_BITMAP *image)
+void InitPrzeszkoda(Przeszkoda przeszkody[], int size, ALLEGRO_BITMAP *image = NULL)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -272,7 +348,8 @@ void InitPrzeszkoda(Przeszkoda przeszkody[], int size, ALLEGRO_BITMAP *image)
 		przeszkody[i].boundx = 64;					//tolerancja kolizji
 		przeszkody[i].boundy = 11;
 
-		przeszkody[i].image = image;
+		if (image != NULL)
+			przeszkody[i].image = image;
 	}
 }
 void DrawPrzeszkoda(Przeszkoda przeszkody[], int size)
@@ -339,11 +416,10 @@ void StartPrzeszkoda(Przeszkoda przeszkody[], int size)
 
 				break;
 			}
-			//break;
 		}
 	}
 }
-void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size)
+void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size, Spadochroniarz &ludek)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -351,8 +427,26 @@ void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size)
 		{
 			przeszkody[i].y -= przeszkody[i].speed;
 
-			//if (przeszkody[i].y < 0)
-			//	przeszkody[i].live = false;						//do kosza
+			if (ludek.score > 100)
+			{
+				przeszkody[i].speed = 6;
+			}
+			if (ludek.score > 200)
+			{
+				przeszkody[i].speed = 7;
+			}
+			if (ludek.score > 300)
+			{
+				przeszkody[i].speed = 8;
+			}
+			if (ludek.score > 400)
+			{
+				przeszkody[i].speed = 9;
+			}
+			if (ludek.score > 500)
+			{
+				przeszkody[i].speed = 10;
+			}
 		}
 	}
 }
@@ -392,7 +486,7 @@ void CollidePrzeszkoda(Przeszkoda przeszkody[], int sizeB, Spadochroniarz &ludek
 	}
 }
 
-void InitMonety(Monety moneta[], int size, ALLEGRO_BITMAP *image)
+void InitMonety(Monety moneta[], int size, ALLEGRO_BITMAP *image = NULL)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -402,7 +496,8 @@ void InitMonety(Monety moneta[], int size, ALLEGRO_BITMAP *image)
 		moneta[i].boundx = 16;					//tolerancja kolizji
 		moneta[i].boundy = 16;
 
-		moneta[i].image = image;
+		if (image != NULL)
+			moneta[i].image = image;
 	}
 }
 void DrawMonety(Monety moneta[], int size)
@@ -432,13 +527,34 @@ void StartMonety(Monety moneta[], int size)
 		}
 	}
 }
-void UpdateMonety(Monety moneta[], int size)
+void UpdateMonety(Monety moneta[], int size, Spadochroniarz &ludek)
 {
 	for (int i = 0; i < size; i++)
 	{
 		if (moneta[i].live)
 		{
 			moneta[i].y -= moneta[i].speed;
+
+			if (ludek.score > 100)
+			{
+				moneta[i].speed = 6;
+			}
+			if (ludek.score > 200)
+			{
+				moneta[i].speed = 7;
+			}
+			if (ludek.score > 300)
+			{
+				moneta[i].speed = 8;
+			}
+			if (ludek.score > 400)
+			{
+				moneta[i].speed = 9;
+			}
+			if (ludek.score > 500)
+			{
+				moneta[i].speed = 10;
+			}
 		}
 	}
 }
@@ -467,7 +583,7 @@ void CollideMonety(Monety moneta[], int sizeB, Spadochroniarz &ludek)
 	}
 }
 
-void InitZycia(Zycia zycie[], int size, ALLEGRO_BITMAP *image)
+void InitZycia(Zycia zycie[], int size, ALLEGRO_BITMAP *image = NULL)
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -477,7 +593,8 @@ void InitZycia(Zycia zycie[], int size, ALLEGRO_BITMAP *image)
 		zycie[i].boundx = 22;					//tolerancja kolizji
 		zycie[i].boundy = 20;
 
-		zycie[i].image = image;
+		if (image != NULL)
+			zycie[i].image = image;
 	}
 }
 void DrawZycia(Zycia zycie[], int size)
@@ -499,7 +616,7 @@ void StartZycia(Zycia zycie[], int size)
 			if (rand() % 1000 == 0)									//generowanie losowej liczby 
 			{
 				zycie[i].live = true;
-				zycie[i].x = rand() % (WIDTH - 75);				//przeszkody mieszcz¹ce sie na ekranie
+				zycie[i].x = rand() % (WIDTH - 75);					//przeszkody mieszcz¹ce sie na ekranie
 				zycie[i].y = HEIGHT;
 
 				break;
@@ -507,13 +624,34 @@ void StartZycia(Zycia zycie[], int size)
 		}
 	}
 }
-void UpdateZycia(Zycia zycie[], int size)
+void UpdateZycia(Zycia zycie[], int size, Spadochroniarz &ludek)
 {
 	for (int i = 0; i < size; i++)
 	{
 		if (zycie[i].live)
 		{
 			zycie[i].y -= zycie[i].speed;
+
+			if (ludek.score > 100)
+			{
+				zycie[i].speed = 6;
+			}
+			if (ludek.score > 200)
+			{
+				zycie[i].speed = 7;
+			}
+			if (ludek.score > 300)
+			{
+				zycie[i].speed = 8;
+			}
+			if (ludek.score > 400)
+			{
+				zycie[i].speed = 9;
+			}
+			if (ludek.score > 500)
+			{
+				zycie[i].speed = 10;
+			}
 		}
 	}
 }
@@ -538,5 +676,39 @@ void CollideZycia(Zycia zycie[], int sizeB, Spadochroniarz &ludek)
 				zycie[i].live = false;
 			}
 		}
+	}
+}
+
+void ChangeStatus(int &status, int nowyStatus)
+{
+	if (status == MENU)
+	{
+
+	}
+	else if (status == GRA)
+	{
+
+	}
+	else if (status == KONIEC)
+	{
+
+	}
+
+	status = nowyStatus;
+
+	if (status == MENU)
+	{
+
+	}
+	else if (status == GRA)
+	{
+		InitLudek(ludek);
+		InitPrzeszkoda(przeszkody, NUM_PRZESZKODY);
+		InitMonety(moneta, NUM_MONETY);
+		InitZycia(zycie, NUM_ZYCIA);
+	}
+	else if (status == KONIEC)
+	{
+
 	}
 }

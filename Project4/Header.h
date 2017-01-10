@@ -57,3 +57,51 @@ struct Zycia
 
 	ALLEGRO_BITMAP *image;
 };
+
+struct Tlo
+{
+	float x;
+	float y;
+	float velX;
+	float velY;
+	int dirX;
+	int dirY;
+
+	int width;
+	int height;
+
+	ALLEGRO_BITMAP *image;
+
+};
+
+struct Tlo1
+{
+	float x;
+	float y;
+	float velX;
+	float velY;
+	int dirX;
+	int dirY;
+
+	int width;
+	int height;
+
+	ALLEGRO_BITMAP *image;
+
+};
+
+struct Tlo2
+{
+	float x;
+	float y;
+	float velX;
+	float velY;
+	int dirX;
+	int dirY;
+
+	int width;
+	int height;
+
+	ALLEGRO_BITMAP *image;
+
+};

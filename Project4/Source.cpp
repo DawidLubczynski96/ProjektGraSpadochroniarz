@@ -47,6 +47,18 @@ void StartZycia(Zycia zycie[], int size);
 void UpdateZycia(Zycia zycie[], int size, Spadochroniarz &ludek);
 void CollideZycia(Zycia zycie[], int sizeB, Spadochroniarz &ludek);
 
+void InitTlo(Tlo &tyl, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image);
+void UpdateTlo(Tlo &tyl);
+void DrawTlo(Tlo &tyl);
+
+void InitTlo1(Tlo1 &tyl1, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image);
+void UpdateTlo1(Tlo1 &tyl1);
+void DrawTlo1(Tlo1 &tyl1);
+
+void InitTlo2(Tlo2 &tyl2, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image);
+void UpdateTlo2(Tlo2 &tyl2);
+void DrawTlo2(Tlo2 &tyl2);
+
 void ChangeStatus(int &status, int nowyStatus);
 
 int main(void)
@@ -56,6 +68,10 @@ int main(void)
 	bool redraw = true;
 	const int FPS = 60;
 	int status = -1;
+
+	Tlo chmura;
+	Tlo1 chmura1;
+	Tlo2 chmura2;
 
 	//zmienne Allegro
 	ALLEGRO_DISPLAY *display = NULL;
@@ -70,6 +86,9 @@ int main(void)
 	ALLEGRO_BITMAP *przeszkodyImage;		
 	ALLEGRO_BITMAP *monetaImage;
 	ALLEGRO_BITMAP *zycieImage;
+	ALLEGRO_BITMAP *tloImage = NULL;
+	ALLEGRO_BITMAP *tlo1Image = NULL;
+	ALLEGRO_BITMAP *tlo2Image = NULL;
 
 	//initialization functions
 	if (!al_init())										//dzialanie allegro
@@ -107,6 +126,15 @@ int main(void)
 	zycieImage = al_load_bitmap("serce.png");
 	al_convert_mask_to_alpha(zycieImage, al_map_rgb(255, 255, 255));
 
+	tloImage = al_load_bitmap("chmura.png");
+	al_convert_mask_to_alpha(tloImage, al_map_rgb(24, 140, 227));
+
+	tlo1Image = al_load_bitmap("chmura.png");
+	al_convert_mask_to_alpha(tlo1Image, al_map_rgb(24, 140, 227));
+
+	tlo2Image = al_load_bitmap("chmura.png");
+	al_convert_mask_to_alpha(tlo2Image, al_map_rgb(24, 140, 227));
+
 	srand(time(NULL));
 
 	ChangeStatus(status, MENU);
@@ -115,6 +143,10 @@ int main(void)
 	InitPrzeszkoda(przeszkody, NUM_PRZESZKODY, przeszkodyImage);
 	InitMonety(moneta, NUM_MONETY, monetaImage);
 	InitZycia(zycie, NUM_ZYCIA, zycieImage);
+
+	InitTlo(chmura, 0, -50, 1, 0, 500, 700, -1, 1, tloImage);
+	InitTlo1(chmura1, 200, 250, 1, 0, 500, 700, -1, 1, tlo1Image);
+	InitTlo2(chmura2, 400, 500, 1, 0, 500, 700, -1, 1, tlo2Image);
 
 
 	font18 = al_load_font("ARIALNBI.TTF", 18, 0);		//(czcionka, rozmiar, flagi)
@@ -142,6 +174,10 @@ int main(void)
 			}
 			else if (status == GRA)
 			{
+				UpdateTlo(chmura);
+				UpdateTlo1(chmura1);
+				UpdateTlo2(chmura2);
+
 				StartPrzeszkoda(przeszkody, NUM_PRZESZKODY);			//inicjuje przeszkode
 				UpdatePrzeszkoda(przeszkody, NUM_PRZESZKODY, ludek);	//ponowne rysowanie po wyjsciu za ekran
 				CollidePrzeszkoda(przeszkody, NUM_PRZESZKODY, ludek);
@@ -249,9 +285,14 @@ int main(void)
 				if (!keys[LEFT] && !keys[RIGHT])
 					DrawLudekProsto(ludek);
 
+				DrawTlo(chmura);
+				DrawTlo1(chmura1);
+				DrawTlo2(chmura2);
+
 				DrawPrzeszkoda(przeszkody, NUM_PRZESZKODY);
 				DrawMonety(moneta, NUM_MONETY);
 				DrawZycia(zycie, NUM_ZYCIA);
+				
 
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 - 245, 5, 0, "Punkty: %i", ludek.score);
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 + 190, 5, 0, "Zycia: %i", ludek.lives);
@@ -271,6 +312,9 @@ int main(void)
 		}
 	}
 	
+	al_destroy_bitmap(tlo2Image);
+	al_destroy_bitmap(tlo1Image);
+	al_destroy_bitmap(tloImage);
 	al_destroy_bitmap(zycieImage);
 	al_destroy_bitmap(monetaImage);
 	al_destroy_bitmap(przeszkodyImage);
@@ -677,6 +721,84 @@ void CollideZycia(Zycia zycie[], int sizeB, Spadochroniarz &ludek)
 			}
 		}
 	}
+}
+
+void InitTlo(Tlo &tyl, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image)
+{
+	tyl.x = x;
+	tyl.y = y;
+	tyl.velX = velx;
+	tyl.velY = vely;
+	tyl.width = width;
+	tyl.height = height;
+	tyl.dirX = dirX;
+	tyl.dirY = dirY;
+	tyl.image = image;
+}
+void UpdateTlo(Tlo &tyl)
+{
+	tyl.x += tyl.velX * tyl.dirX;
+	if (tyl.x + tyl.width <= 0)
+		tyl.x = 0;
+}
+void DrawTlo(Tlo &tyl)
+{
+	al_draw_bitmap(tyl.image, tyl.x, tyl.y, 0);
+
+	if (tyl.x + tyl.width < WIDTH)
+		al_draw_bitmap(tyl.image, tyl.x + tyl.width, tyl.y, 0);
+}
+
+void InitTlo1(Tlo1 &tyl1, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image)
+{
+	tyl1.x = x;
+	tyl1.y = y;
+	tyl1.velX = velx;
+	tyl1.velY = vely;
+	tyl1.width = width;
+	tyl1.height = height;
+	tyl1.dirX = dirX;
+	tyl1.dirY = dirY;
+	tyl1.image = image;
+}
+void UpdateTlo1(Tlo1 &tyl1)
+{
+	tyl1.x += tyl1.velX * tyl1.dirX;
+	if (tyl1.x + tyl1.width <= 0)
+		tyl1.x = 0;
+}
+void DrawTlo1(Tlo1 &tyl1)
+{
+	al_draw_bitmap(tyl1.image, tyl1.x, tyl1.y, 0);
+
+	if (tyl1.x + tyl1.width < WIDTH)
+		al_draw_bitmap(tyl1.image, tyl1.x + tyl1.width, tyl1.y, 0);
+}
+
+void InitTlo2(Tlo2 &tyl2, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image)
+{
+	tyl2.x = x;
+	tyl2.y = y;
+	tyl2.velX = velx;
+	tyl2.velY = vely;
+	tyl2.width = width;
+	tyl2.height = height;
+	tyl2.dirX = dirX;
+	tyl2.dirY = dirY;
+	tyl2.image = image;
+}
+void UpdateTlo2(Tlo2 &tyl2)
+{
+	tyl2.x += tyl2.velX * tyl2.dirX;
+	if (tyl2.x + tyl2.width <= 0)
+		tyl2.x = 0;
+}
+void DrawTlo2(Tlo2 &tyl2)
+{
+	al_draw_bitmap(tyl2.image, tyl2.x, tyl2.y, 0);
+
+	if (tyl2.x + tyl2.width < WIDTH)
+		al_draw_bitmap(tyl2.image, tyl2.x + tyl2.width, tyl2.y, 0);
 }
 
 void ChangeStatus(int &status, int nowyStatus)

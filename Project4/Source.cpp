@@ -90,7 +90,7 @@ int main(void)
 	ALLEGRO_BITMAP *tlo1Image = NULL;
 	ALLEGRO_BITMAP *tlo2Image = NULL;
 
-	//initialization functions
+	//funkcje inicjujace
 	if (!al_init())										//dzialanie allegro
 		return -1;
 
@@ -127,13 +127,13 @@ int main(void)
 	al_convert_mask_to_alpha(zycieImage, al_map_rgb(255, 255, 255));
 
 	tloImage = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tloImage, al_map_rgb(24, 140, 227));
+	al_convert_mask_to_alpha(tloImage, al_map_rgb(50, 200, 250));
 
 	tlo1Image = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tlo1Image, al_map_rgb(24, 140, 227));
+	al_convert_mask_to_alpha(tlo1Image, al_map_rgb(50, 200, 250));
 
 	tlo2Image = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tlo2Image, al_map_rgb(24, 140, 227));
+	al_convert_mask_to_alpha(tlo2Image, al_map_rgb(50, 200, 250));
 
 	srand(time(NULL));
 
@@ -144,9 +144,9 @@ int main(void)
 	InitMonety(moneta, NUM_MONETY, monetaImage);
 	InitZycia(zycie, NUM_ZYCIA, zycieImage);
 
-	InitTlo(chmura, 0, -50, 1, 0, 500, 700, -1, 1, tloImage);
-	InitTlo1(chmura1, 200, 250, 1, 0, 500, 700, -1, 1, tlo1Image);
-	InitTlo2(chmura2, 400, 500, 1, 0, 500, 700, -1, 1, tlo2Image);
+	InitTlo(chmura, -60, -50, 0, 1, 500, 700, -1, 1, tloImage);
+	InitTlo1(chmura1, 90, 200, 0, 1, 500, 700, -1, 1, tlo1Image);
+	InitTlo2(chmura2, 240, 450, 0, 1, 500, 700, -1, 1, tlo2Image);
 
 
 	font18 = al_load_font("ARIALNBI.TTF", 18, 0);		//(czcionka, rozmiar, flagi)
@@ -186,7 +186,7 @@ int main(void)
 				UpdateMonety(moneta, NUM_MONETY, ludek);				//ponowne rysowanie po wyjsciu za ekran
 				CollideMonety(moneta, NUM_MONETY, ludek);
 
-				StartZycia(zycie, NUM_ZYCIA);							//inicjuje dodatkowe ¿ycia
+				StartZycia(zycie, NUM_ZYCIA);							//inicjuje dodatkowe zycia
 				UpdateZycia(zycie, NUM_ZYCIA, ludek);					//ponowne rysowanie po wyjsciu za ekran
 				CollideZycia(zycie, NUM_ZYCIA, ludek);
 
@@ -266,7 +266,7 @@ int main(void)
 		if (redraw && al_is_event_queue_empty(event_queue))
 		{
 			redraw = false;
-			
+
 			if (status == MENU)
 			{
 				al_draw_textf(font48, al_map_rgb(0, 0, 0), WIDTH / 2, HEIGHT / 2 - 300, ALLEGRO_ALIGN_CENTRE, "SPADOCHRONIARZ");
@@ -276,6 +276,10 @@ int main(void)
 			}
 			else if (status == GRA)
 			{
+				DrawTlo(chmura);				//kolejnosc rysowania jest istotna
+				DrawTlo1(chmura1);
+				DrawTlo2(chmura2);
+
 				if (keys[LEFT])
 					MoveLudekLeft(ludek);
 
@@ -285,9 +289,6 @@ int main(void)
 				if (!keys[LEFT] && !keys[RIGHT])
 					DrawLudekProsto(ludek);
 
-				DrawTlo(chmura);
-				DrawTlo1(chmura1);
-				DrawTlo2(chmura2);
 
 				DrawPrzeszkoda(przeszkody, NUM_PRZESZKODY);
 				DrawMonety(moneta, NUM_MONETY);
@@ -355,7 +356,6 @@ void InitLudek(Spadochroniarz &ludek, ALLEGRO_BITMAP *image = NULL, ALLEGRO_BITM
 
 void DrawLudekLeft(Spadochroniarz &ludek)
 {
-	//al_draw_filled_rectangle(ludek.x, ludek.y, ludek.x + 30, ludek.y + 30, al_map_rgb(255, 0, 255));
 	al_draw_bitmap(ludek.image, ludek.x, ludek.y, 0);
 }
 void DrawLudekRight(Spadochroniarz &ludek)
@@ -471,7 +471,7 @@ void UpdatePrzeszkoda(Przeszkoda przeszkody[], int size, Spadochroniarz &ludek)
 		{
 			przeszkody[i].y -= przeszkody[i].speed;
 
-			if (ludek.score > 100)
+			if (ludek.score > 100)					//zwiekszanie predkosci przeszkod powyzej 100pkt
 			{
 				przeszkody[i].speed = 6;
 			}
@@ -505,15 +505,6 @@ void CollidePrzeszkoda(Przeszkoda przeszkody[], int sizeB, Spadochroniarz &ludek
 				ludek.y + 15 > (przeszkody[i].y - przeszkody[i].boundy) &&			//dol 
 				ludek.y < (przeszkody[i].y + przeszkody[i].boundy))					//gora 
 			
-				/*if (ludek.x + 30 >(przeszkody[i].x - przeszkody[i].boundx) &&		//prawa strona kwadratu
-					ludek.x < ((przeszkody[i].x - 70) + przeszkody[i].boundx) &&	//lewa strona kwadratu
-					ludek.y + 30 >(przeszkody[i].y - przeszkody[i].boundy) &&		//dol kwadratu
-					ludek.y < ((przeszkody[i].y - 15) + przeszkody[i].boundy))*/	//gora kwadratu
-
-				/*if (przeszkody[i].x - przeszkody[i].boundx < ludek.x + ludek.boundx &&
-				przeszkody[i].x + przeszkody[i].boundx > ludek.x - ludek.boundx &&
-				przeszkody[i].y - przeszkody[i].boundy < ludek.y + ludek.boundy &&
-				przeszkody[i].y + przeszkody[i].boundy > ludek.y - ludek.boundy)*/
 			{
 				przeszkody[i].live = false;
 				ludek.lives--;
@@ -737,16 +728,16 @@ void InitTlo(Tlo &tyl, float x, float y, float velx, float vely, int width, int 
 }
 void UpdateTlo(Tlo &tyl)
 {
-	tyl.x += tyl.velX * tyl.dirX;
-	if (tyl.x + tyl.width <= 0)
-		tyl.x = 0;
+	tyl.y -= tyl.velY * tyl.dirY;
+	if (tyl.y + tyl.height <= 500)
+		tyl.y = 500;
 }
 void DrawTlo(Tlo &tyl)
 {
 	al_draw_bitmap(tyl.image, tyl.x, tyl.y, 0);
 
-	if (tyl.x + tyl.width < WIDTH)
-		al_draw_bitmap(tyl.image, tyl.x + tyl.width, tyl.y, 0);
+	if (tyl.y + tyl.height < HEIGHT)
+		al_draw_bitmap(tyl.image, tyl.x, tyl.y + tyl.height, 0);
 }
 
 void InitTlo1(Tlo1 &tyl1, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image)
@@ -763,16 +754,16 @@ void InitTlo1(Tlo1 &tyl1, float x, float y, float velx, float vely, int width, i
 }
 void UpdateTlo1(Tlo1 &tyl1)
 {
-	tyl1.x += tyl1.velX * tyl1.dirX;
-	if (tyl1.x + tyl1.width <= 0)
-		tyl1.x = 0;
+	tyl1.y -= tyl1.velY * tyl1.dirY;
+	if (tyl1.y + tyl1.height <= 500)
+		tyl1.y = 500;
 }
 void DrawTlo1(Tlo1 &tyl1)
 {
 	al_draw_bitmap(tyl1.image, tyl1.x, tyl1.y, 0);
 
-	if (tyl1.x + tyl1.width < WIDTH)
-		al_draw_bitmap(tyl1.image, tyl1.x + tyl1.width, tyl1.y, 0);
+	if (tyl1.y + tyl1.height < HEIGHT)
+		al_draw_bitmap(tyl1.image, tyl1.x, tyl1.y + tyl1.height, 0);
 }
 
 void InitTlo2(Tlo2 &tyl2, float x, float y, float velx, float vely, int width, int height, int dirX, int dirY, ALLEGRO_BITMAP *image)
@@ -789,16 +780,16 @@ void InitTlo2(Tlo2 &tyl2, float x, float y, float velx, float vely, int width, i
 }
 void UpdateTlo2(Tlo2 &tyl2)
 {
-	tyl2.x += tyl2.velX * tyl2.dirX;
-	if (tyl2.x + tyl2.width <= 0)
-		tyl2.x = 0;
+	tyl2.y -= tyl2.velY * tyl2.dirY;
+	if (tyl2.y + tyl2.height <= 500)
+		tyl2.y = 500;
 }
 void DrawTlo2(Tlo2 &tyl2)
 {
 	al_draw_bitmap(tyl2.image, tyl2.x, tyl2.y, 0);
 
-	if (tyl2.x + tyl2.width < WIDTH)
-		al_draw_bitmap(tyl2.image, tyl2.x + tyl2.width, tyl2.y, 0);
+	if (tyl2.y + tyl2.height < HEIGHT)
+		al_draw_bitmap(tyl2.image, tyl2.x, tyl2.y + tyl2.height, 0);
 }
 
 void ChangeStatus(int &status, int nowyStatus)

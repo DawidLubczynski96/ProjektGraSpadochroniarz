@@ -71,7 +71,6 @@ struct Tlo
 	int height;
 
 	ALLEGRO_BITMAP *image;
-
 };
 
 struct Tlo1
@@ -87,7 +86,6 @@ struct Tlo1
 	int height;
 
 	ALLEGRO_BITMAP *image;
-
 };
 
 struct Tlo2
@@ -103,5 +101,4 @@ struct Tlo2
 	int height;
 
 	ALLEGRO_BITMAP *image;
-
 };

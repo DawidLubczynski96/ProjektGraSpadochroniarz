@@ -6,8 +6,8 @@
 #include "Header.h"
 
 //GLOBALNE=============================
-const int WIDTH = 500;
-const int HEIGHT = 700;
+const int WIDTH = 500;									//szerokosc okna gry
+const int HEIGHT = 700;									//wysokosc okna gry
 const int NUM_PRZESZKODY = 10;							//max ilosc przeszkod na ekranie
 const int NUM_MONETY = 1;								//max ilosc monet na ekranie
 const int NUM_ZYCIA = 1;								//max ilosc zyc na ekranie
@@ -121,19 +121,19 @@ int main(void)
 	al_convert_mask_to_alpha(przeszkodyImage, al_map_rgb(255, 255, 255));
 
 	monetaImage = al_load_bitmap("5zlotych.png");
-	al_convert_mask_to_alpha(monetaImage, al_map_rgb(255, 255, 255));
+	al_convert_mask_to_alpha(monetaImage, al_map_rgb(50, 200, 255));
 
 	zycieImage = al_load_bitmap("serce.png");
-	al_convert_mask_to_alpha(zycieImage, al_map_rgb(255, 255, 255));
+	al_convert_mask_to_alpha(zycieImage, al_map_rgb(50, 200, 255));
 
 	tloImage = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tloImage, al_map_rgb(50, 200, 250));
+	al_convert_mask_to_alpha(tloImage, al_map_rgb(50, 200, 255));
 
 	tlo1Image = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tlo1Image, al_map_rgb(50, 200, 250));
+	al_convert_mask_to_alpha(tlo1Image, al_map_rgb(50, 200, 255));
 
 	tlo2Image = al_load_bitmap("chmura.png");
-	al_convert_mask_to_alpha(tlo2Image, al_map_rgb(50, 200, 250));
+	al_convert_mask_to_alpha(tlo2Image, al_map_rgb(50, 200, 255));
 
 	srand(time(NULL));
 
@@ -148,11 +148,9 @@ int main(void)
 	InitTlo1(chmura1, 90, 200, 0, 1, 500, 700, -1, 1, tlo1Image);
 	InitTlo2(chmura2, 240, 450, 0, 1, 500, 700, -1, 1, tlo2Image);
 
-
 	font18 = al_load_font("ARIALNBI.TTF", 18, 0);		//(czcionka, rozmiar, flagi)
 	font32 = al_load_font("ARIALNBI.TTF", 32, 0);
 	font48 = al_load_font("ARIALNBI.TTF", 48, 0);
-
 
 	al_register_event_source(event_queue, al_get_keyboard_event_source());
 	al_register_event_source(event_queue, al_get_timer_event_source(timer));
@@ -289,12 +287,10 @@ int main(void)
 				if (!keys[LEFT] && !keys[RIGHT])
 					DrawLudekProsto(ludek);
 
-
 				DrawPrzeszkoda(przeszkody, NUM_PRZESZKODY);
 				DrawMonety(moneta, NUM_MONETY);
 				DrawZycia(zycie, NUM_ZYCIA);
 				
-
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 - 245, 5, 0, "Punkty: %i", ludek.score);
 				al_draw_textf(font18, al_map_rgb(0, 0, 0), WIDTH / 2 + 190, 5, 0, "Zycia: %i", ludek.lives);
 			}
@@ -404,45 +400,16 @@ void DrawPrzeszkoda(Przeszkoda przeszkody[], int size)
 		{	
 			al_draw_bitmap(przeszkody[i].image, przeszkody[i].x, przeszkody[i].y, 0);
 
-			//al_draw_filled_rectangle(przeszkody[i].x, przeszkody[i].y, przeszkody[i].x - 70, przeszkody[i].y - 15, al_map_rgb(255, 0, 0));
-			//{
-				//ograniczenia:
-			/*if (przeszkody[i].x > ((przeszkody[i+1].x - 70) - przeszkody[i+1].boundx) &&		//prawa strona 
-					przeszkody[i].x - 70 < (przeszkody[i+1].x + przeszkody[i+1].boundx) &&			//lewa strona 
-					przeszkody[i].y > ((przeszkody[i+1].y - 15) - przeszkody[i+1].boundy) &&		//dol 
-					przeszkody[i].y - 15 < (przeszkody[i+1].y + przeszkody[i+1].boundy))			//gora
+//ograniczenie kolidowania generowanych przeszkód (nie eliminuje sporadycznej kolizji):
+
+			if (przeszkody[i].x - 180 > (przeszkody[i].x - przeszkody[i].boundx) &&			//prawa 
+				przeszkody[i].x < (przeszkody[i].x + przeszkody[i].boundx) &&				//lewa 
+				przeszkody[i].y + 65 > (przeszkody[i].y - przeszkody[i].boundy) &&			//dol 
+				przeszkody[i].y < (przeszkody[i].y + przeszkody[i].boundy))					//gora
+
 				{
 					przeszkody[i].live = false;
 				}
-				else if (!(przeszkody[i].x > ((przeszkody[i + 1].x - 70) - przeszkody[i + 1].boundx) &&		//prawa strona 
-					przeszkody[i].x - 70 < (przeszkody[i + 1].x + przeszkody[i + 1].boundx) &&			//lewa strona 
-					przeszkody[i].y > ((przeszkody[i + 1].y - 15) - przeszkody[i + 1].boundy) &&		//dol 
-					przeszkody[i].y - 15 < (przeszkody[i + 1].y + przeszkody[i + 1].boundy)))			//gora
-				{
-					przeszkody[i].live = true;
-					al_draw_filled_rectangle(przeszkody[i].x, przeszkody[i].y, przeszkody[i].x - 70, przeszkody[i].y - 15, al_map_rgb(255, 0, 0));
-
-				}*/
-			//}
-			/*else
-			{
-				przeszkody[i].live = true;
-				al_draw_filled_rectangle(przeszkody[i].x, przeszkody[i].y, przeszkody[i].x - 70, przeszkody[i].y - 15, al_map_rgb(255, 0, 0));
-			}*/
-			/*else if (przeszkody[i].live)
-			{
-				al_draw_filled_rectangle(przeszkody[i].x, przeszkody[i].y, przeszkody[i].x - 70, przeszkody[i].y - 15, al_map_rgb(255, 0, 0));
-			}*/
-
-			/*else if (!(przeszkody[i].x - 90 <(przeszkody[i].x - przeszkody[i].boundx) &&		//prawa strona 
-				przeszkody[i].x > ((przeszkody[i].x + 90) + przeszkody[i].boundx) &&	//lewa strona 
-				przeszkody[i].y - 30 < (przeszkody[i].y - przeszkody[i].boundy) &&		//dol 
-				przeszkody[i].y > ((przeszkody[i].y + 30) + przeszkody[i].boundy)))
-			{
-				przeszkody[i].live = true;
-				al_draw_filled_rectangle(przeszkody[i].x, przeszkody[i].y, przeszkody[i].x - 70, przeszkody[i].y - 15, al_map_rgb(255, 0, 0));
-			}*/
-
 		}
 	}
 }
